@@ -1,103 +1,720 @@
+"use client";
+import { cn } from "@/lib/utils";
+import {
+  Info,
+  InstagramLogo,
+  MicrophoneStage,
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
+  SpotifyLogo,
+} from "@phosphor-icons/react";
 import Image from "next/image";
+import { useRef, useState, useEffect } from "react";
+import { Poppins } from "next/font/google";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import Link from "next/link";
+
+const poppins = Poppins({
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
+});
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState(0);
+  const audioRef = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // Define your playlist – these paths are relative to the public folder.
+  const playlist = [
+    {
+      mp3: "/music/This_aint_for_you_unmixed.mp3",
+      cover: "/music/covers/raaghav.jpg",
+      name: "This Ain't For You",
+      artist: "Raaghav",
+    },
+    {
+      mp3: "/music/Dooba.mp3",
+      cover: "/music/covers/Dooba.png",
+      name: "Dooba",
+      artist: "Raaghav",
+    },
+    {
+      mp3: "/music/Secondcoming.mp3",
+      cover: "/music/covers/raaghav.jpg",
+      name: "Second Coming",
+      artist: "Raaghav",
+    },
+    {
+      mp3: "/music/RKD.mp3",
+      cover: "/music/covers/RKD.png",
+      name: "Rok Ke Toh Dekh",
+      artist: "Raaghav, 8GB RAM",
+    },
+  ];
+
+  // Toggle play/pause and update state
+  const togglePlayPause = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  // Skip to next track (loops back to the start)
+  const handleNext = () => {
+    const nextTrack = (currentTrack + 1) % playlist.length;
+    setCurrentTrack(nextTrack);
+  };
+
+  // Go to previous track (loops to the last song)
+  const handlePrev = () => {
+    const prevTrack = (currentTrack - 1 + playlist.length) % playlist.length;
+    setCurrentTrack(prevTrack);
+  };
+
+  // When the current track changes, load the new track and auto-play if needed.
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.load();
+      if (isPlaying) {
+        audioRef.current.play();
+      }
+    }
+  }, [currentTrack]);
+
+  // Auto-play the next track when the current one ends.
+  const handleEnded = () => {
+    handleNext();
+  };
+
+  // Listen for keydown events:
+  // - Space: toggle play/pause
+  // - Ctrl + ArrowRight: next track
+  // - Ctrl + ArrowLeft: previous track
+  useEffect(() => {
+    const handleKeyDown = (e: any) => {
+      if (e.code === "Space") {
+        e.preventDefault(); // Prevent default scrolling
+        togglePlayPause();
+      }
+      if (e.ctrlKey && e.code === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      }
+      if (e.ctrlKey && e.code === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPlaying, currentTrack]);
+
+  return (
+    <div
+      className={cn(
+        "w-screen h-screen flex items-center justify-center bg-stone-500 relative overflow-hidden",
+        poppins.className,
+      )}
+    >
+      <div className="absolute lg:hidden bg-neutral-800 h-full w-full z-50 flex items-center justify-center p-5">
+        <p className="text-neutral-400 text-xl text-center">
+          Please switch to a larger screen for better experience!
+        </p>
+      </div>
+      <Image
+        src="/wood.jpg"
+        layout="fill"
+        // objectFit="cover"
+        className="absolute top-0 left-0 w-full h-full mix-blend-multiply saturate-0 brightness-150"
+        alt=""
+      />
+      <div className="absolute top-5 left-5">
+        <Popover>
+          <PopoverTrigger className="bg-neutral-800 p-2 rounded-full">
+            <Info size={24} className="text-neutral-400" />
+          </PopoverTrigger>
+          <PopoverContent
+            side="bottom"
+            align="start"
+            className="bg-neutral-800 border-neutral-800 text-neutral-400 flex flex-col gap-5"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <p className="font-medium">
+              Shoutout to my friend, Raaghav, for allowing me to use his music
+              for this project. Do check out his discography and socials!
+            </p>
+            <div className="flex gap-2 items-center">
+              <Link
+                target="_blank"
+                href="https://open.spotify.com/artist/3TGpV6A1s9WTH10YmMW92e?si=ytMYH_dvTkOWOvZ-SS8h3A"
+              >
+                <SpotifyLogo weight="fill" size={24} />
+              </Link>
+              <Link target="_blank" href="https://www.instagram.com/raaghhzzz/">
+                <InstagramLogo weight="fill" size={24} />
+              </Link>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <Image
+        src="/plant.png"
+        objectFit="contain"
+        width={750}
+        height={750}
+        quality={100}
+        alt=""
+        className="absolute -top-80 -right-50 aspect-square"
+      />
+      <div className="bg-red-800 w-6/12 lg:w-auto h-auto lg:h-8/12 aspect-[13/17] rounded-2xl relative p-2 shadow-lg shadow-red-900">
+        <div className="flex flex-col h-full w-full">
+          <div className="bg-neutral-800 w-full aspect-square rounded-lg p-7 relative shadow-lg shadow-neutral-800">
+            <div
+              role="button"
+              onClick={togglePlayPause}
+              className="absolute z-20 w-52 h-52 bottom-5 right-12 origin-bottom-right transition-transform duration-500"
+            >
+              <div className="h-8 aspect-square w-8 absolute -bottom-2 rounded-full -right-2 bg-neutral-500"></div>
+              <div
+                style={{
+                  transform: isPlaying ? "rotate(0deg)" : "rotate(15deg)",
+                }}
+                className="absolute bottom-0 right-0 w-4 rounded-t-full h-52 bg-neutral-500 origin-bottom-right transition-transform duration-500"
+              />
+            </div>
+            <div
+              style={{
+                animationPlayState: isPlaying ? "running" : "paused",
+              }}
+              className="w-full h-full rounded-full relative animate-[spin_5s_linear_infinite]"
+            >
+              <Image
+                src={playlist[currentTrack].cover}
+                layout="fill"
+                // objectFit="cover"
+                className="rounded-full absolute top-0 left-0 w-full h-full"
+                alt=""
+              />
+              <div className="absolute top-0 left-0 h-full w-full z-10">
+                <div className="h-full w-full rounded-full flex items-center justify-center z-10">
+                  <div className="h-[40%] aspect-square rounded-full bg-black/50 p-4">
+                    <div className="rounded-full h-full w-full bg-neutral-300/40 flex flex-col items-center justify-center relative text-center">
+                      <p className="font-semibold text-center text-sm">
+                        {playlist[currentTrack].name}
+                      </p>
+                      <div className="flex items-center justify-center gap-1">
+                        <MicrophoneStage size={10} weight="duotone" />
+                        <p className="text-xs font-light">
+                          {playlist[currentTrack].artist}
+                        </p>
+                      </div>
+                      <div className="absolute top-0 left-0 h-full rounded-full w-full flex items-center justify-center">
+                        <div className="h-[10px] aspect-square rounded-full bg-neutral-800"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-around w-full h-full">
+            <div className="flex flex-col items-center gap-2">
+              <div
+                role="button"
+                onClick={handlePrev}
+                className="h-[50px] rounded-full aspect-square bg-black flex items-center justify-center"
+              >
+                <svg
+                  width="50"
+                  height="50"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#ccc" />
+                      <stop offset="100%" stopColor="#666" />
+                    </radialGradient>
+                  </defs>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="url(#knobGradient)"
+                    stroke="#333"
+                    strokeWidth="2"
+                  />
+                  <circle cx="50" cy="50" r="35" fill="#444" />
+                  <line
+                    x1="50"
+                    y1="50"
+                    x2="50"
+                    y2="15"
+                    stroke="#fff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <SkipBack weight="fill" size={24} className="text-red-400" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div
+                role="button"
+                onClick={togglePlayPause}
+                className="h-[50px] rounded-full aspect-square bg-black flex items-center justify-center"
+              >
+                <svg
+                  width="50"
+                  height="50"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#ccc" />
+                      <stop offset="100%" stopColor="#666" />
+                    </radialGradient>
+                  </defs>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="url(#knobGradient)"
+                    stroke="#333"
+                    strokeWidth="2"
+                  />
+                  <circle cx="50" cy="50" r="35" fill="#444" />
+                  <line
+                    x1="50"
+                    y1="50"
+                    x2="50"
+                    y2="15"
+                    stroke="#fff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              {isPlaying ? (
+                <Pause weight="fill" size={24} className="text-red-400" />
+              ) : (
+                <Play weight="fill" size={24} className="text-red-400" />
+              )}
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div
+                role="button"
+                onClick={handleNext}
+                className="h-[50px] rounded-full aspect-square bg-black flex items-center justify-center"
+              >
+                <svg
+                  width="50"
+                  height="50"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#ccc" />
+                      <stop offset="100%" stopColor="#666" />
+                    </radialGradient>
+                  </defs>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="url(#knobGradient)"
+                    stroke="#333"
+                    strokeWidth="2"
+                  />
+                  <circle cx="50" cy="50" r="35" fill="#444" />
+                  <line
+                    x1="50"
+                    y1="50"
+                    x2="50"
+                    y2="15"
+                    stroke="#fff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <SkipForward weight="fill" size={24} className="text-red-400" />
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      {/* Audio element to play music */}
+      <audio ref={audioRef} onEnded={handleEnded} preload="metadata">
+        <source src={playlist[currentTrack].mp3} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
     </div>
   );
 }
+
+// "use client";
+// import { cn } from "@/lib/utils";
+// import {
+//   Info,
+//   InstagramLogo,
+//   MicrophoneStage,
+//   Pause,
+//   Play,
+//   SkipBack,
+//   SkipForward,
+//   SpotifyLogo,
+// } from "@phosphor-icons/react";
+// import Image from "next/image";
+// import { useRef, useState, useEffect } from "react";
+// import { Poppins } from "next/font/google";
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverTrigger,
+// } from "@/components/ui/popover";
+// import Link from "next/link";
+//
+// const poppins = Poppins({
+//   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+//   subsets: ["latin"],
+// });
+//
+// export default function Home() {
+//   const [isPlaying, setIsPlaying] = useState(false);
+//   const [currentTrack, setCurrentTrack] = useState(0);
+//   const audioRef = useRef(null);
+//
+//   // Define your playlist – these paths are relative to the public folder.
+//   const playlist = [
+//     {
+//       mp3: "/music/This_aint_for_you_unmixed.mp3",
+//       cover: "/music/covers/raaghav.jpg",
+//       name: "This Ain't For You",
+//       artist: "Raaghav",
+//     },
+//     {
+//       mp3: "/music/Dooba.mp3",
+//       cover: "/music/covers/Dooba.png",
+//       name: "Dooba",
+//       artist: "Raaghav",
+//     },
+//     {
+//       mp3: "/music/Secondcoming.mp3",
+//       cover: "/music/covers/raaghav.jpg",
+//       name: "Second Coming",
+//       artist: "Raaghav",
+//     },
+//     {
+//       mp3: "/music/RKD.mp3",
+//       cover: "/music/covers/RKD.png",
+//       name: "Rok Ke Toh Dekh",
+//       artist: "Raaghav, 8GB RAM",
+//     },
+//   ];
+//
+//   // Toggle play/pause and update state
+//   const togglePlayPause = () => {
+//     if (!audioRef.current) return;
+//     if (isPlaying) {
+//       audioRef.current.pause();
+//     } else {
+//       audioRef.current.play();
+//     }
+//     setIsPlaying(!isPlaying);
+//   };
+//
+//   // Skip to next track (loops back to the start)
+//   const handleNext = () => {
+//     const nextTrack = (currentTrack + 1) % playlist.length;
+//     setCurrentTrack(nextTrack);
+//   };
+//
+//   // Go to previous track (loops to the last song)
+//   const handlePrev = () => {
+//     const prevTrack = (currentTrack - 1 + playlist.length) % playlist.length;
+//     setCurrentTrack(prevTrack);
+//   };
+//
+//   // When the current track changes, load the new track and auto-play if needed.
+//   useEffect(() => {
+//     if (audioRef.current) {
+//       audioRef.current.pause();
+//       audioRef.current.load();
+//       if (isPlaying) {
+//         audioRef.current.play();
+//       }
+//     }
+//   }, [currentTrack]);
+//
+//   // Auto-play the next track when the current one ends.
+//   const handleEnded = () => {
+//     handleNext();
+//   };
+//
+//   // Listen for the space bar key press to toggle play/pause.
+//   useEffect(() => {
+//     const handleKeyDown = (e) => {
+//       if (e.code === "Space") {
+//         e.preventDefault(); // Prevent default scrolling
+//         togglePlayPause();
+//       }
+//     };
+//
+//     window.addEventListener("keydown", handleKeyDown);
+//     return () => window.removeEventListener("keydown", handleKeyDown);
+//   }, [isPlaying]);
+//
+//   return (
+//     <div
+//       className={cn(
+//         "w-screen h-screen flex items-center justify-center bg-stone-500 relative overflow-hidden",
+//         poppins.className,
+//       )}
+//     >
+//       <Image
+//         src="/wood.jpg"
+//         layout="fill"
+//         // objectFit="cover"
+//         className="absolute top-0 left-0 w-full h-full mix-blend-multiply saturate-0 brightness-150"
+//         alt=""
+//       />
+//       <div className="absolute top-5 left-5">
+//         <Popover>
+//           <PopoverTrigger className="bg-neutral-800 p-2 rounded-full">
+//             <Info size={24} className="text-neutral-400" />
+//           </PopoverTrigger>
+//           <PopoverContent
+//             side="bottom"
+//             align="start"
+//             className="bg-neutral-800 border-neutral-800 text-neutral-400 flex flex-col gap-5"
+//           >
+//             <p className="font-medium">
+//               Shoutout to my friend, Raaghav, for allowing me to use his music
+//               for this project. Do check out his discography and his socials!
+//             </p>
+//             <div className="flex gap-2 items-center">
+//               <Link
+//                 target="_blank"
+//                 href="https://open.spotify.com/artist/3TGpV6A1s9WTH10YmMW92e?si=ytMYH_dvTkOWOvZ-SS8h3A"
+//               >
+//                 <SpotifyLogo weight="fill" size={24} />
+//               </Link>
+//               <Link target="_blank" href="https://www.instagram.com/raaghhzzz/">
+//                 <InstagramLogo weight="fill" size={24} />
+//               </Link>
+//             </div>
+//           </PopoverContent>
+//         </Popover>
+//       </div>
+//       <Image
+//         src="/plant.png"
+//         objectFit="contain"
+//         width={750}
+//         height={750}
+//         quality={100}
+//         alt=""
+//         className="absolute -top-80 -right-50 aspect-square"
+//       />
+//       <div className="bg-red-800 h-8/12 aspect-[13/17] rounded-2xl relative p-2 shadow-lg shadow-red-900">
+//         <div className="flex flex-col h-full w-full">
+//           <div className="bg-neutral-800 w-full aspect-square rounded-lg p-7 relative shadow-lg shadow-neutral-800">
+//             <div
+//               role="button"
+//               onClick={togglePlayPause}
+//               className="absolute z-20 w-52 h-52 bottom-5 right-12 origin-bottom-right transition-transform duration-500"
+//             >
+//               <div className="h-8 aspect-square w-8 absolute -bottom-2 rounded-full -right-2 bg-neutral-500"></div>
+//               <div
+//                 style={{
+//                   transform: isPlaying ? "rotate(0deg)" : "rotate(15deg)",
+//                 }}
+//                 className="absolute bottom-0 right-0 w-4 rounded-t-full h-52 bg-neutral-500 origin-bottom-right transition-transform duration-500"
+//               />
+//             </div>
+//             <div
+//               style={{
+//                 animationPlayState: isPlaying ? "running" : "paused",
+//               }}
+//               className={cn(
+//                 "w-full h-full rounded-full relative animate-[spin_5s_linear_infinite]",
+//               )}
+//             >
+//               <Image
+//                 src={playlist[currentTrack].cover}
+//                 layout="fill"
+//                 // objectFit="cover"
+//                 className="rounded-full absolute top-0 left-0 w-full h-full"
+//                 alt=""
+//               />
+//               <div className="absolute top-0 left-0 h-full w-full z-10">
+//                 <div className="h-full w-full rounded-full flex items-center justify-center z-10">
+//                   <div className="h-[40%] aspect-square rounded-full bg-black/50 p-4">
+//                     <div className="rounded-full h-full w-full bg-neutral-300/40 flex flex-col items-center justify-center relative text-center">
+//                       <p className="font-semibold text-center text-sm">
+//                         {playlist[currentTrack].name}
+//                       </p>
+//                       <div className="flex items-center justify-center gap-1">
+//                         <MicrophoneStage size={10} weight="duotone" />
+//                         <p className="text-xs font-light">
+//                           {playlist[currentTrack].artist}
+//                         </p>
+//                       </div>
+//                       <div className="absolute top-0 left-0 h-full rounded-full w-full flex items-center justify-center">
+//                         <div className="h-[10px] aspect-square rounded-full bg-neutral-800"></div>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//           <div className="flex items-center justify-around w-full h-full">
+//             <div className="flex flex-col items-center gap-2">
+//               <div
+//                 role="button"
+//                 onClick={handlePrev}
+//                 className="h-[50px] rounded-full aspect-square bg-black flex items-center justify-center"
+//               >
+//                 <svg
+//                   width="50"
+//                   height="50"
+//                   viewBox="0 0 100 100"
+//                   xmlns="http://www.w3.org/2000/svg"
+//                 >
+//                   <defs>
+//                     <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
+//                       <stop offset="0%" stop-color="#ccc" />
+//                       <stop offset="100%" stop-color="#666" />
+//                     </radialGradient>
+//                   </defs>
+//                   <circle
+//                     cx="50"
+//                     cy="50"
+//                     r="45"
+//                     fill="url(#knobGradient)"
+//                     stroke="#333"
+//                     stroke-width="2"
+//                   />
+//                   <circle cx="50" cy="50" r="35" fill="#444" />
+//                   <line
+//                     x1="50"
+//                     y1="50"
+//                     x2="50"
+//                     y2="15"
+//                     stroke="#fff"
+//                     stroke-width="4"
+//                     stroke-linecap="round"
+//                   />
+//                 </svg>
+//               </div>
+//               <SkipBack weight="fill" size={24} className="text-red-400" />
+//             </div>
+//             <div className="flex flex-col items-center gap-2">
+//               <div
+//                 role="button"
+//                 onClick={togglePlayPause}
+//                 className="h-[50px] rounded-full aspect-square bg-black flex items-center justify-center"
+//               >
+//                 <svg
+//                   width="50"
+//                   height="50"
+//                   viewBox="0 0 100 100"
+//                   xmlns="http://www.w3.org/2000/svg"
+//                 >
+//                   <defs>
+//                     <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
+//                       <stop offset="0%" stop-color="#ccc" />
+//                       <stop offset="100%" stop-color="#666" />
+//                     </radialGradient>
+//                   </defs>
+//                   <circle
+//                     cx="50"
+//                     cy="50"
+//                     r="45"
+//                     fill="url(#knobGradient)"
+//                     stroke="#333"
+//                     stroke-width="2"
+//                   />
+//                   <circle cx="50" cy="50" r="35" fill="#444" />
+//                   <line
+//                     x1="50"
+//                     y1="50"
+//                     x2="50"
+//                     y2="15"
+//                     stroke="#fff"
+//                     stroke-width="4"
+//                     stroke-linecap="round"
+//                   />
+//                 </svg>
+//               </div>
+//
+//               {isPlaying ? (
+//                 <Pause weight="fill" size={24} className="text-red-400" />
+//               ) : (
+//                 <Play weight="fill" size={24} className="text-red-400" />
+//               )}
+//             </div>
+//             <div className="flex flex-col items-center gap-2">
+//               <div
+//                 role="button"
+//                 onClick={handleNext}
+//                 className="h-[50px] rounded-full aspect-square bg-black flex items-center justify-center"
+//               >
+//                 <svg
+//                   width="50"
+//                   height="50"
+//                   viewBox="0 0 100 100"
+//                   xmlns="http://www.w3.org/2000/svg"
+//                 >
+//                   <defs>
+//                     <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
+//                       <stop offset="0%" stop-color="#ccc" />
+//                       <stop offset="100%" stop-color="#666" />
+//                     </radialGradient>
+//                   </defs>
+//                   <circle
+//                     cx="50"
+//                     cy="50"
+//                     r="45"
+//                     fill="url(#knobGradient)"
+//                     stroke="#333"
+//                     stroke-width="2"
+//                   />
+//                   <circle cx="50" cy="50" r="35" fill="#444" />
+//                   <line
+//                     x1="50"
+//                     y1="50"
+//                     x2="50"
+//                     y2="15"
+//                     stroke="#fff"
+//                     stroke-width="4"
+//                     stroke-linecap="round"
+//                   />
+//                 </svg>
+//               </div>
+//               <SkipForward weight="fill" size={24} className="text-red-400" />
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//       {/* Audio element to play music */}
+//       <audio ref={audioRef} onEnded={handleEnded} preload="metadata">
+//         <source src={playlist[currentTrack].mp3} type="audio/mpeg" />
+//         Your browser does not support the audio element.
+//       </audio>
+//     </div>
+//   );
+// }
