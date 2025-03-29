@@ -25,13 +25,20 @@ const poppins = Poppins({
   subsets: ["latin"],
 });
 
+interface Track {
+  mp3: string;
+  cover: string;
+  name: string;
+  artist: string;
+}
+
 export default function Home() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState(0);
-  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentTrack, setCurrentTrack] = useState<number>(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   // Define your playlist – these paths are relative to the public folder.
-  const playlist = [
+  const playlist: Track[] = [
     {
       mp3: "/music/This_aint_for_you_unmixed.mp3",
       cover: "/music/covers/raaghav.jpg",
@@ -59,7 +66,7 @@ export default function Home() {
   ];
 
   // Toggle play/pause and update state
-  const togglePlayPause = () => {
+  const togglePlayPause = (): void => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
@@ -70,13 +77,13 @@ export default function Home() {
   };
 
   // Skip to next track (loops back to the start)
-  const handleNext = () => {
+  const handleNext = (): void => {
     const nextTrack = (currentTrack + 1) % playlist.length;
     setCurrentTrack(nextTrack);
   };
 
   // Go to previous track (loops to the last song)
-  const handlePrev = () => {
+  const handlePrev = (): void => {
     const prevTrack = (currentTrack - 1 + playlist.length) % playlist.length;
     setCurrentTrack(prevTrack);
   };
@@ -90,10 +97,10 @@ export default function Home() {
         audioRef.current.play();
       }
     }
-  }, [currentTrack]);
+  }, [currentTrack, isPlaying]);
 
   // Auto-play the next track when the current one ends.
-  const handleEnded = () => {
+  const handleEnded = (): void => {
     handleNext();
   };
 
@@ -102,7 +109,7 @@ export default function Home() {
   // - Ctrl + ArrowRight: next track
   // - Ctrl + ArrowLeft: previous track
   useEffect(() => {
-    const handleKeyDown = (e: any) => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
       if (e.code === "Space") {
         e.preventDefault(); // Prevent default scrolling
         togglePlayPause();
@@ -464,18 +471,29 @@ export default function Home() {
 //     handleNext();
 //   };
 //
-//   // Listen for the space bar key press to toggle play/pause.
+//   // Listen for keydown events:
+//   // - Space: toggle play/pause
+//   // - Ctrl + ArrowRight: next track
+//   // - Ctrl + ArrowLeft: previous track
 //   useEffect(() => {
-//     const handleKeyDown = (e) => {
+//     const handleKeyDown = (e: any) => {
 //       if (e.code === "Space") {
 //         e.preventDefault(); // Prevent default scrolling
 //         togglePlayPause();
+//       }
+//       if (e.ctrlKey && e.code === "ArrowRight") {
+//         e.preventDefault();
+//         handleNext();
+//       }
+//       if (e.ctrlKey && e.code === "ArrowLeft") {
+//         e.preventDefault();
+//         handlePrev();
 //       }
 //     };
 //
 //     window.addEventListener("keydown", handleKeyDown);
 //     return () => window.removeEventListener("keydown", handleKeyDown);
-//   }, [isPlaying]);
+//   }, [isPlaying, currentTrack]);
 //
 //   return (
 //     <div
@@ -484,6 +502,11 @@ export default function Home() {
 //         poppins.className,
 //       )}
 //     >
+//       <div className="absolute lg:hidden bg-neutral-800 h-full w-full z-50 flex items-center justify-center p-5">
+//         <p className="text-neutral-400 text-xl text-center">
+//           Please switch to a larger screen for better experience!
+//         </p>
+//       </div>
 //       <Image
 //         src="/wood.jpg"
 //         layout="fill"
@@ -503,7 +526,7 @@ export default function Home() {
 //           >
 //             <p className="font-medium">
 //               Shoutout to my friend, Raaghav, for allowing me to use his music
-//               for this project. Do check out his discography and his socials!
+//               for this project. Do check out his discography and socials!
 //             </p>
 //             <div className="flex gap-2 items-center">
 //               <Link
@@ -528,7 +551,7 @@ export default function Home() {
 //         alt=""
 //         className="absolute -top-80 -right-50 aspect-square"
 //       />
-//       <div className="bg-red-800 h-8/12 aspect-[13/17] rounded-2xl relative p-2 shadow-lg shadow-red-900">
+//       <div className="bg-red-800 w-6/12 lg:w-auto h-auto lg:h-8/12 aspect-[13/17] rounded-2xl relative p-2 shadow-lg shadow-red-900">
 //         <div className="flex flex-col h-full w-full">
 //           <div className="bg-neutral-800 w-full aspect-square rounded-lg p-7 relative shadow-lg shadow-neutral-800">
 //             <div
@@ -548,9 +571,7 @@ export default function Home() {
 //               style={{
 //                 animationPlayState: isPlaying ? "running" : "paused",
 //               }}
-//               className={cn(
-//                 "w-full h-full rounded-full relative animate-[spin_5s_linear_infinite]",
-//               )}
+//               className="w-full h-full rounded-full relative animate-[spin_5s_linear_infinite]"
 //             >
 //               <Image
 //                 src={playlist[currentTrack].cover}
@@ -596,8 +617,8 @@ export default function Home() {
 //                 >
 //                   <defs>
 //                     <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
-//                       <stop offset="0%" stop-color="#ccc" />
-//                       <stop offset="100%" stop-color="#666" />
+//                       <stop offset="0%" stopColor="#ccc" />
+//                       <stop offset="100%" stopColor="#666" />
 //                     </radialGradient>
 //                   </defs>
 //                   <circle
@@ -606,7 +627,7 @@ export default function Home() {
 //                     r="45"
 //                     fill="url(#knobGradient)"
 //                     stroke="#333"
-//                     stroke-width="2"
+//                     strokeWidth="2"
 //                   />
 //                   <circle cx="50" cy="50" r="35" fill="#444" />
 //                   <line
@@ -615,8 +636,8 @@ export default function Home() {
 //                     x2="50"
 //                     y2="15"
 //                     stroke="#fff"
-//                     stroke-width="4"
-//                     stroke-linecap="round"
+//                     strokeWidth="4"
+//                     strokeLinecap="round"
 //                   />
 //                 </svg>
 //               </div>
@@ -636,8 +657,8 @@ export default function Home() {
 //                 >
 //                   <defs>
 //                     <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
-//                       <stop offset="0%" stop-color="#ccc" />
-//                       <stop offset="100%" stop-color="#666" />
+//                       <stop offset="0%" stopColor="#ccc" />
+//                       <stop offset="100%" stopColor="#666" />
 //                     </radialGradient>
 //                   </defs>
 //                   <circle
@@ -646,7 +667,7 @@ export default function Home() {
 //                     r="45"
 //                     fill="url(#knobGradient)"
 //                     stroke="#333"
-//                     stroke-width="2"
+//                     strokeWidth="2"
 //                   />
 //                   <circle cx="50" cy="50" r="35" fill="#444" />
 //                   <line
@@ -655,12 +676,11 @@ export default function Home() {
 //                     x2="50"
 //                     y2="15"
 //                     stroke="#fff"
-//                     stroke-width="4"
-//                     stroke-linecap="round"
+//                     strokeWidth="4"
+//                     strokeLinecap="round"
 //                   />
 //                 </svg>
 //               </div>
-//
 //               {isPlaying ? (
 //                 <Pause weight="fill" size={24} className="text-red-400" />
 //               ) : (
@@ -681,8 +701,8 @@ export default function Home() {
 //                 >
 //                   <defs>
 //                     <radialGradient id="knobGradient" cx="50%" cy="50%" r="50%">
-//                       <stop offset="0%" stop-color="#ccc" />
-//                       <stop offset="100%" stop-color="#666" />
+//                       <stop offset="0%" stopColor="#ccc" />
+//                       <stop offset="100%" stopColor="#666" />
 //                     </radialGradient>
 //                   </defs>
 //                   <circle
@@ -691,7 +711,7 @@ export default function Home() {
 //                     r="45"
 //                     fill="url(#knobGradient)"
 //                     stroke="#333"
-//                     stroke-width="2"
+//                     strokeWidth="2"
 //                   />
 //                   <circle cx="50" cy="50" r="35" fill="#444" />
 //                   <line
@@ -700,8 +720,8 @@ export default function Home() {
 //                     x2="50"
 //                     y2="15"
 //                     stroke="#fff"
-//                     stroke-width="4"
-//                     stroke-linecap="round"
+//                     strokeWidth="4"
+//                     strokeLinecap="round"
 //                   />
 //                 </svg>
 //               </div>
